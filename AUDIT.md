@@ -39,6 +39,8 @@ Go's `time.AddDate` normalizes month ends, leap days, and nonexistent local time
 
 ## Validation
 
+The published fork tree was compared with the locally tested snapshot: all 64 tracked files matched their Git blob hashes before release preparation.
+
 - Upstream baseline: `go test -race ./...` and `go vet ./...` passed; the upstream fuzz target completed a 30-second run. Passing baseline tests did not detect the semantic issues above.
 - Fork: full tests with the race detector; `go vet ./...`; root-package `golangci-lint run .`; English fuzzing for 30 seconds (135,463 executions in the recorded run).
 - Added English regression tests for exact 300-year results, historical/strict policies, compound units, excessive offsets, midnight/seconds, spring/fall DST, 23/25-hour intervals, local defaults, explicit timezone precedence, and local CLI date parsing.
