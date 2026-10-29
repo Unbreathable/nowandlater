@@ -1,5 +1,8 @@
 ![Now-and-Later-Wrapper-Small](https://github.com/user-attachments/assets/6095d42b-a443-4363-8b73-29cbdf297725)
 
+> [!WARNING]
+> This fork was audited and edited slightly by AI. Take the edits and comments by the AI in here with a grain of salt.
+
 > This is a safety fork of [client9/nowandlater](https://github.com/client9/nowandlater), created to keep an independently controlled snapshot of the dependency. Original work and MIT license belong to the upstream authors. Based on upstream commit [`31604653`](https://github.com/client9/nowandlater/commit/31604653dcd7e8a3201d2b695a05870cd11567c4).
 >
 > Version 1.0.0 fixes relative-duration overflow, explicit midnight, and calendar arithmetic across daylight-saving transitions. Review and regression testing focused on English. See [AUDIT.md](AUDIT.md) for scope and results.
