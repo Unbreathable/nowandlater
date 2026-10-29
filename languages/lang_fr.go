@@ -1,7 +1,7 @@
 package languages
 
 import (
-	. "github.com/client9/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
 )
 
 // LangFr is the built-in French Lang.

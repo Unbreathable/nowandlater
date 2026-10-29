@@ -450,7 +450,10 @@ func ClassifyBareInteger(s string) Token {
 	if !allDigits(s) || len(s) > 10 {
 		return Token{Type: TokenUnknown, Value: s}
 	}
-	n := MustAtoi(s)
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return Token{Type: TokenUnknown, Value: s}
+	}
 	switch {
 	case len(s) == 4:
 		return Token{Type: TokenYear, Value: n}
@@ -506,11 +509,15 @@ func splitCompoundDate(chunk string, lang *Lang) []Token {
 			if !allDigits(part) || len(part) > 10 {
 				return []Token{{Type: TokenDateFragment, Value: chunk}}
 			}
+			n, err := strconv.Atoi(part)
+			if err != nil {
+				return []Token{{Type: TokenDateFragment, Value: chunk}}
+			}
 			if len(part) == 4 {
-				tok = Token{Type: TokenYear, Value: MustAtoi(part)}
+				tok = Token{Type: TokenYear, Value: n}
 				hasYearOrMonth = true
 			} else {
-				tok = Token{Type: TokenInteger, Value: MustAtoi(part)} // leading zeros ignored in date context
+				tok = Token{Type: TokenInteger, Value: n} // leading zeros ignored in date context
 			}
 		case isLetterByte(part[0]):
 			tok = classifyWord(part, lang)

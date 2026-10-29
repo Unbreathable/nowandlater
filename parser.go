@@ -3,8 +3,8 @@ package nowandlater
 import (
 	"time"
 
-	"github.com/client9/nowandlater/internal/engine"
-	"github.com/client9/nowandlater/languages"
+	"github.com/Unbreathable/nowandlater/internal/engine"
+	"github.com/Unbreathable/nowandlater/languages"
 )
 
 // Parser wraps a Lang with runtime defaults, providing a single-call

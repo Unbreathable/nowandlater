@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/client9/nowandlater/internal/engine"
-	. "github.com/client9/nowandlater/languages"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/languages"
 )
 
 // deNow is the fixed reference time for LangDe resolver tests.

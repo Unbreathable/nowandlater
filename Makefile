@@ -60,4 +60,4 @@ bench: ## benchmarks
 
 .PHONY: env
 env: ## set up local environment
-	curl -sSfL https://golangci-lint.run/install.sh | sh -s -- -b $(go env GOPATH)/bin v2.13.1
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.1

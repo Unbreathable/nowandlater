@@ -3,8 +3,8 @@ package tests
 import (
 	"testing"
 
-	. "github.com/client9/nowandlater/internal/engine"
-	. "github.com/client9/nowandlater/languages"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/languages"
 )
 
 // parseCase describes one input and its expected ParsedDateSlots fields.

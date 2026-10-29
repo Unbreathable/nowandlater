@@ -10,8 +10,8 @@ import (
 // ---------------------------------------------------------------------------
 
 // periodToSeconds maps a Period constant to its approximate number of seconds.
-// Month and year values are approximations (30-day month, 365-day year);
-// the resolver layer is responsible for calendar-correct arithmetic.
+// Whole calendar units use AddDate in the resolver. These approximations
+// (30-day month, 365-day year) are used for fractional units and DeltaSeconds.
 var periodToSeconds = map[Period]int{
 	PeriodSecond:    1,
 	PeriodMinute:    60,

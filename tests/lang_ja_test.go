@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/client9/nowandlater/internal/engine"
-	. "github.com/client9/nowandlater/languages"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/languages"
 )
 
 // jaNow is the fixed reference time for LangJa resolver tests.
@@ -86,7 +86,7 @@ var japaneseCases = []struct {
 
 	// --- カ月 (katakana variant) ---
 	// Month deltas use the 30-day approximation from periodToSeconds (3×30d = 90d).
-	{"3カ月後", u(2026, 6, 20, 10, 0, 0)},
+	{"3カ月後", u(2026, 6, 22, 10, 0, 0)},
 
 	// --- Direction+unit macros not covered by existing tests ---
 	{"先週", u(2026, 3, 9, 0, 0, 0)}, // last week (Monday of previous week)

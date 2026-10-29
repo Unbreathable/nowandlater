@@ -1,6 +1,6 @@
 package nowandlater
 
-import "github.com/client9/nowandlater/internal/engine"
+import "github.com/Unbreathable/nowandlater/internal/engine"
 
 type ambiguityPreset uint8
 

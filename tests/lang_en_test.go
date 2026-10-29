@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/client9/nowandlater/internal/engine"
-	. "github.com/client9/nowandlater/languages"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/languages"
 )
 
 // enNow is the fixed reference time for LangEn resolver tests.
@@ -112,7 +112,7 @@ var englishCases = []struct {
 
 	// --- CLDR unit abbreviations ---
 	{"in 2 wk", u(2026, 4, 5, 10, 0, 0)},    // wk = weeks
-	{"3 mo ago", u(2025, 12, 22, 10, 0, 0)}, // mo = months (3×30 days)
+	{"3 mo ago", u(2025, 12, 22, 10, 0, 0)}, // three calendar months
 
 	// --- 2-letter weekday abbreviations ---
 	{"tu", u(2026, 3, 24, 0, 0, 0)}, // tu = Tuesday (nearest from Sunday)

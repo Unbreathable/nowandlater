@@ -1,19 +1,24 @@
 ![Now-and-Later-Wrapper-Small](https://github.com/user-attachments/assets/6095d42b-a443-4363-8b73-29cbdf297725)
 
+> This is a safety fork of [client9/nowandlater](https://github.com/client9/nowandlater), created to keep an independently controlled snapshot of the dependency. Original work and MIT license belong to the upstream authors. Based on upstream commit [`31604653`](https://github.com/client9/nowandlater/commit/31604653dcd7e8a3201d2b695a05870cd11567c4).
+>
+> Version 1.0.0 fixes relative-duration overflow, explicit midnight, and calendar arithmetic across daylight-saving transitions. Review and regression testing focused on English. See [AUDIT.md](AUDIT.md) for scope and results.
+
+
 # nowandlater - fast natural date and time parsing
 
 A self-contained, zero-dependency Go library for parsing natural-language
 date and time strings into `time.Time` values.
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/client9/nowandlater.svg)](https://pkg.go.dev/github.com/client9/nowandlater)
-[![Go](https://github.com/client9/nowandlater/actions/workflows/go.yml/badge.svg)](https://github.com/client9/nowandlater/actions/workflows/go.yml)
+[![Go Reference](https://pkg.go.dev/badge/github.com/Unbreathable/nowandlater.svg)](https://pkg.go.dev/github.com/Unbreathable/nowandlater)
+[![Go](https://github.com/Unbreathable/nowandlater/actions/workflows/go.yml/badge.svg)](https://github.com/Unbreathable/nowandlater/actions/workflows/go.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 🇬🇧🇪🇸🇩🇪🇫🇷🇮🇹🇵🇹🇷🇺🇯🇵🇨🇳
 
 Announcements: [LinkedIn](https://www.linkedin.com/posts/nick-galbreath-1890794_i-built-a-golang-module-client9nowandlater-activity-7445152694492672000--XFA) [golang-nuts](https://groups.google.com/g/golang-nuts/c/b2aRJiDzAl0/m/3Rm-bv_mAwAJ)
 
 ```go
-import "github.com/client9/nowandlater"
+import "github.com/Unbreathable/nowandlater"
 ```
 ---
 
@@ -26,13 +31,13 @@ import "github.com/client9/nowandlater"
 * Extensible to add new date, time, and duration expressions - PRs welcome!
 * Scalable - adding languages or rules has no additional performance cost.
 * MIT License - do whatever you want with it!
-* Production Ready - >95% test coverage, with fuzz and performance tests
+* Includes unit, fuzz, and performance tests
 * See [FAQ](docs/faq.md) for more details.
 
 ## Installation
 
 ```
-go get github.com/client9/nowandlater
+go get github.com/Unbreathable/nowandlater@v1.0.0
 ```
 
 No external dependencies.
@@ -235,3 +240,11 @@ Use `-unix` to print only the resolved Unix timestamp (useful for scripting).
 | `make fuzz`  | Run fuzz tests            |
 | `make bench` | Run benchmark tests       |
 | `make clean` | Clean up                  |
+
+### Local time and relative arithmetic
+
+The zero-value parser uses Go's `time.Now()` and `time.Local`, so local time means the timezone configured for the process or host. A container configured for UTC uses UTC. Set `Parser.Location` with `time.LoadLocation("America/New_York")` (or another IANA timezone) to choose explicitly. A timezone written in the input takes priority. Abbreviations such as `EST` remain fixed offsets; use an IANA location for seasonal DST rules.
+
+Whole days, weeks, fortnights, months, and years use `time.AddDate`, preserving local calendar arithmetic across DST. Hours, minutes, and seconds represent elapsed time: `in 1 day` and `in 24 hours` can differ across DST. Fractional calendar units add their whole calendar part first, followed by an elapsed fraction (24-hour days, 30-day months, 365-day years). Go's usual `AddDate` normalization applies at month ends and leap days.
+
+`midnight` means 00:00 on the selected date, including in `tomorrow at midnight`. Relative results must fall within years 1 through 9999; offsets outside that range return an error instead of overflowing. For example, `in 300 years` advances 300 calendar years. Permissive normalization of invalid absolute dates and clock values is retained.

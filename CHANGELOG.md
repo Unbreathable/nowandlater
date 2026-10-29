@@ -7,7 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-29
+
+### Added
+
+- Independently controlled fork of [client9/nowandlater](https://github.com/client9/nowandlater), based on upstream commit `31604653dcd7e8a3201d2b695a05870cd11567c4`.
+- English regression tests for local timezone defaults, DST, midnight, calendar units, and large offsets; an English-only fuzz target.
+- Audit scope and findings in `AUDIT.md`.
+
 ### Fixed
+
+- Calendar days, weeks, months, and years now use Go's `time.AddDate`; hours, minutes, and seconds remain elapsed units.
+- Large relative offsets no longer overflow `time.Duration`; relative results outside years 1..9999 return errors.
+- Explicit midnight and zero-hour times retain their intended clock time in relative expressions.
+- The CLI's date-only `-now` option now uses local midnight through `time.ParseInLocation`.
+- Numeric tokens that overflow the platform int now return a parse error rather than panicking.
+
+### Changed
+
+- Go module path is `github.com/Unbreathable/nowandlater`.
+- Developer setup installs a pinned Go tool instead of piping a downloaded shell script to `sh`.
+- Invalid absolute dates and clock values retain upstream's permissive normalization.
 
 - Reorder structs to save memory using [betteralign](https://github.com/dkorunic/betteralign/)
 
@@ -42,5 +62,6 @@ and internal review are still in progress ahead of v1.0.0.
 - Benchmarks (`bench_test.go`) and a fuzz/test suite with >95% coverage.
 - Package documentation in `doc.go` and contributor docs under `docs/`.
 
-[Unreleased]: https://github.com/client9/nowandlater/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/Unbreathable/nowandlater/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Unbreathable/nowandlater/compare/31604653dcd7e8a3201d2b695a05870cd11567c4...v1.0.0
 [0.9.0]: https://github.com/client9/nowandlater/releases/tag/v0.9.0

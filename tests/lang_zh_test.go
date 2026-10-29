@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/client9/nowandlater/internal/engine"
-	. "github.com/client9/nowandlater/languages"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/languages"
 )
 
 // zhNow is the fixed reference time for LangZh resolver tests.
@@ -73,7 +73,7 @@ var chineseCases = []struct {
 
 	// --- CLDR patterns: N年前/后 (year unit, bug fix) ---
 	{"2年前", u(2024, 3, 22, 10, 0, 0)}, // 2 years ago
-	{"3年后", u(2029, 3, 21, 10, 0, 0)}, // in 3 years (3×365 days, crosses 2028 leap year)
+	{"3年后", u(2029, 3, 22, 10, 0, 0)}, // three calendar years
 
 	// --- CLDR patterns: N秒钟前/后 (emphatic second form) ---
 	{"30秒钟前", u(2026, 3, 22, 9, 59, 30)}, // 30 seconds ago
@@ -84,7 +84,7 @@ var chineseCases = []struct {
 	{"礼拜天", u(2026, 3, 22, 0, 0, 0)},   // colloquial Sunday (nearest = today, reference is Sunday)
 	{"刚刚", u(2026, 3, 22, 10, 0, 0)},   // just now → AnchorNow
 	{"此时", u(2026, 3, 22, 10, 0, 0)},   // at this moment → AnchorNow
-	{"2個月后", u(2026, 5, 21, 10, 0, 0)}, // traditional 個月 (2×30 days = 60 days)
+	{"2個月后", u(2026, 5, 22, 10, 0, 0)}, // two calendar months
 
 	// --- Time with seconds (covers zhParseTime seconds branch) ---
 	{"下午3点15分30秒", u(2026, 3, 22, 15, 15, 30)}, // 3:15:30 PM

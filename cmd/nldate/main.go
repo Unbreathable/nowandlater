@@ -24,8 +24,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/client9/nowandlater"
-	"github.com/client9/nowandlater/internal/engine"
+	"github.com/Unbreathable/nowandlater"
+	"github.com/Unbreathable/nowandlater/internal/engine"
 )
 
 func lookupLang(code string) (*engine.Lang, error) {
@@ -153,8 +153,8 @@ func parseNowFlag(s string) (time.Time, error) {
 	if t, err := time.Parse(time.RFC3339, s); err == nil {
 		return t, nil
 	}
-	if t, err := time.Parse("2006-01-02", s); err == nil {
-		return t.In(time.Local), nil
+	if t, err := time.ParseInLocation("2006-01-02", s, time.Local); err == nil {
+		return t, nil
 	}
 	return time.Time{}, fmt.Errorf("cannot parse %q; use RFC3339 (2026-03-22T10:00:00Z) or date (2026-03-22)", s)
 }

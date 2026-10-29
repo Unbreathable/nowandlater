@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/client9/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
 )
 
 // LangZh is the built-in Simplified Chinese Lang.

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/client9/nowandlater/languages"
+	. "github.com/Unbreathable/nowandlater/languages"
 )
 
 // fixedBenchNow is a pre-built time value used as the reference clock in all

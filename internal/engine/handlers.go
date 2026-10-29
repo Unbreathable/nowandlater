@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math"
 	"strconv"
 	"strings"
 )
@@ -31,7 +30,7 @@ func handleAnchor(tokens []Token) (*ParsedDateSlots, error) {
 	if anchor == AnchorNow {
 		period = PeriodSecond
 	}
-	return &ParsedDateSlots{DeltaSeconds: new(AnchorToSeconds[anchor]), Period: period}, nil
+	return &ParsedDateSlots{DeltaSeconds: new(AnchorToSeconds[anchor]), relative: &relativeDelta{days: AnchorToSeconds[anchor] / 86400}, Period: period}, nil
 }
 
 // handleWeekday handles: WEEKDAY
@@ -156,14 +155,7 @@ func handleMonthDayYear(tokens []Token) (*ParsedDateSlots, error) {
 // Example: "3 days ago"
 func handleRelativeDelta(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	n := toks[0].Value.(int)
-	period := toks[1].Value.(Period)
-	secs := periodToSeconds[period]
-	sign := int(toks[2].Value.(Modifier))
-	return &ParsedDateSlots{
-		DeltaSeconds: new(n * secs * sign),
-		Period:       period,
-	}, nil
+	return relativeSlots(float64(toks[0].Value.(int)), toks[1].Value.(Period), int(toks[2].Value.(Modifier)))
 }
 
 // handleModifierIntegerUnit handles: MODIFIER INTEGER UNIT
@@ -171,14 +163,7 @@ func handleRelativeDelta(tokens []Token) (*ParsedDateSlots, error) {
 // This is the modifier-first word order used by many non-English languages.
 func handleModifierIntegerUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	sign := int(toks[0].Value.(Modifier))
-	n := toks[1].Value.(int)
-	period := toks[2].Value.(Period)
-	secs := periodToSeconds[period]
-	return &ParsedDateSlots{
-		DeltaSeconds: new(n * secs * sign),
-		Period:       period,
-	}, nil
+	return relativeSlots(float64(toks[1].Value.(int)), toks[2].Value.(Period), int(toks[0].Value.(Modifier)))
 }
 
 // handleModifierIntegerUnitIntegerUnit handles: MODIFIER INTEGER UNIT INTEGER UNIT
@@ -186,9 +171,7 @@ func handleModifierIntegerUnit(tokens []Token) (*ParsedDateSlots, error) {
 // This is the modifier-first compound form used by many non-English languages.
 func handleModifierIntegerUnitIntegerUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	sign := int(toks[0].Value.(Modifier))
-	secs, period := sumTwoUnits(toks, 1)
-	return &ParsedDateSlots{DeltaSeconds: new(secs * sign), Period: period}, nil
+	return sumTwoUnits(toks, 1, int(toks[0].Value.(Modifier)))
 }
 
 // handleWeekdayDirection handles: WEEKDAY DIRECTION
@@ -208,15 +191,14 @@ func handleWeekdayDirection(tokens []Token) (*ParsedDateSlots, error) {
 // The anchor shifts the reference point: "3 days before tomorrow" = -2 days from now.
 func handleRelativeDeltaAnchor(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	n := toks[0].Value.(int)
-	period := toks[1].Value.(Period)
-	secs := periodToSeconds[period]
-	sign := int(toks[2].Value.(Modifier))
-	aDelta := AnchorToSeconds[toks[3].Value.(Anchor)]
-	return &ParsedDateSlots{
-		DeltaSeconds: new(n*secs*sign + aDelta),
-		Period:       period,
-	}, nil
+	slots, err := relativeSlots(float64(toks[0].Value.(int)), toks[1].Value.(Period), int(toks[2].Value.(Modifier)))
+	if err != nil {
+		return nil, err
+	}
+	anchorSeconds := AnchorToSeconds[toks[3].Value.(Anchor)]
+	slots.relative.days += anchorSeconds / 86400
+	setLegacySeconds(slots, float64(*slots.DeltaSeconds)+float64(anchorSeconds))
+	return slots, nil
 }
 
 // handleIntegerUnit handles: INTEGER UNIT
@@ -224,133 +206,108 @@ func handleRelativeDeltaAnchor(tokens []Token) (*ParsedDateSlots, error) {
 // Implied direction is future (positive delta), matching GNU date behaviour.
 func handleIntegerUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	n := toks[0].Value.(int)
-	period := toks[1].Value.(Period)
-	secs := periodToSeconds[period]
-	return &ParsedDateSlots{
-		DeltaSeconds:  new(n * secs),
-		Period:        period,
-		AmbiguousForm: AmbiguousImplicitDuration,
-	}, nil
-}
-
-// decimalUnitSeconds converts a fractional count and period to whole seconds.
-func decimalUnitSeconds(n float64, period Period) int {
-	return int(math.Round(n * float64(periodToSeconds[period])))
+	slots, err := relativeSlots(float64(toks[0].Value.(int)), toks[1].Value.(Period), 1)
+	if err != nil {
+		return nil, err
+	}
+	slots.AmbiguousForm = AmbiguousImplicitDuration
+	return slots, nil
 }
 
 // handleDecimalUnit handles: DECIMAL UNIT
 // Examples: "3.5 days", "1.5 horas" — implied future.
 func handleDecimalUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	n := toks[0].Value.(float64)
-	period := toks[1].Value.(Period)
-	return &ParsedDateSlots{
-		DeltaSeconds:  new(decimalUnitSeconds(n, period)),
-		Period:        period,
-		AmbiguousForm: AmbiguousImplicitDuration,
-	}, nil
+	slots, err := relativeSlots(toks[0].Value.(float64), toks[1].Value.(Period), 1)
+	if err != nil {
+		return nil, err
+	}
+	slots.AmbiguousForm = AmbiguousImplicitDuration
+	return slots, nil
 }
 
 // handlePrepDecimalUnit handles: PREP DECIMAL UNIT
 // Examples: "in 1.5 hours", "en 2.5 días"
 func handlePrepDecimalUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	n := toks[1].Value.(float64)
-	period := toks[2].Value.(Period)
-	return &ParsedDateSlots{DeltaSeconds: new(decimalUnitSeconds(n, period)), Period: period}, nil
+	return relativeSlots(toks[1].Value.(float64), toks[2].Value.(Period), 1)
 }
 
 // handleDecimalUnitModifier handles: DECIMAL UNIT MODIFIER
 // Examples: "1.5 hours ago", "2.5 días después"
 func handleDecimalUnitModifier(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	n := toks[0].Value.(float64)
-	period := toks[1].Value.(Period)
-	sign := int(toks[2].Value.(Modifier))
-	return &ParsedDateSlots{DeltaSeconds: new(decimalUnitSeconds(n, period) * sign), Period: period}, nil
+	return relativeSlots(toks[0].Value.(float64), toks[1].Value.(Period), int(toks[2].Value.(Modifier)))
 }
 
 // handleModifierDecimalUnit handles: MODIFIER DECIMAL UNIT
 // Examples: "hace 1.5 días" (Spanish modifier-first word order)
 func handleModifierDecimalUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	sign := int(toks[0].Value.(Modifier))
-	n := toks[1].Value.(float64)
-	period := toks[2].Value.(Period)
-	return &ParsedDateSlots{DeltaSeconds: new(decimalUnitSeconds(n, period) * sign), Period: period}, nil
+	return relativeSlots(toks[1].Value.(float64), toks[2].Value.(Period), int(toks[0].Value.(Modifier)))
 }
 
 // handlePrepIntegerUnit handles: PREP INTEGER UNIT
 // Example: "in 2 days"
 func handlePrepIntegerUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	n := toks[1].Value.(int)
-	period := toks[2].Value.(Period)
-	secs := periodToSeconds[period]
-	return &ParsedDateSlots{
-		DeltaSeconds: new(n * secs),
-		Period:       period,
-	}, nil
+	return relativeSlots(float64(toks[1].Value.(int)), toks[2].Value.(Period), 1)
 }
 
 // sumTwoUnits sums two adjacent INTEGER UNIT pairs starting at toks[idx]
-// and returns the total seconds and the finer of the two periods.
+// and retains their calendar components and the finer of the two periods.
 // toks must be already filtered (no FILLER tokens).
-func sumTwoUnits(toks []Token, idx int) (secs int, period Period) {
-	n1 := toks[idx].Value.(int)
-	p1 := toks[idx+1].Value.(Period)
-	n2 := toks[idx+2].Value.(int)
-	p2 := toks[idx+3].Value.(Period)
-	secs = n1*periodToSeconds[p1] + n2*periodToSeconds[p2]
-	if periodToSeconds[p1] < periodToSeconds[p2] {
-		period = p1
-	} else {
-		period = p2
+func sumTwoUnits(toks []Token, idx, sign int) (*ParsedDateSlots, error) {
+	first, err := relativeSlots(float64(toks[idx].Value.(int)), toks[idx+1].Value.(Period), sign)
+	if err != nil {
+		return nil, err
 	}
-	return
+	second, err := relativeSlots(float64(toks[idx+2].Value.(int)), toks[idx+3].Value.(Period), sign)
+	if err != nil {
+		return nil, err
+	}
+	first.relative.years += second.relative.years
+	first.relative.months += second.relative.months
+	first.relative.days += second.relative.days
+	first.relative.seconds += second.relative.seconds
+	setLegacySeconds(first, float64(*first.DeltaSeconds)+float64(*second.DeltaSeconds))
+	if periodToSeconds[second.Period] < periodToSeconds[first.Period] {
+		first.Period = second.Period
+	}
+	return first, nil
 }
 
 // handlePrepIntegerUnitIntegerUnit handles: PREP INTEGER UNIT INTEGER UNIT
 // Example: "in 1 hour and 10 minutes"
 func handlePrepIntegerUnitIntegerUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	secs, period := sumTwoUnits(toks, 1)
-	return &ParsedDateSlots{DeltaSeconds: new(secs), Period: period}, nil
+	return sumTwoUnits(toks, 1, 1)
 }
 
 // handleIntegerUnitIntegerUnit handles: INTEGER UNIT INTEGER UNIT
 // Example: "1 hour and 10 minutes" — implied future.
 func handleIntegerUnitIntegerUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	secs, period := sumTwoUnits(toks, 0)
-	return &ParsedDateSlots{
-		DeltaSeconds:  new(secs),
-		Period:        period,
-		AmbiguousForm: AmbiguousImplicitDuration,
-	}, nil
+	slots, err := sumTwoUnits(toks, 0, 1)
+	if err != nil {
+		return nil, err
+	}
+	slots.AmbiguousForm = AmbiguousImplicitDuration
+	return slots, nil
 }
 
 // handleIntegerUnitIntegerUnitModifier handles: INTEGER UNIT INTEGER UNIT MODIFIER
 // Example: "1 hour and 10 minutes ago"
 func handleIntegerUnitIntegerUnitModifier(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	secs, period := sumTwoUnits(toks, 0)
-	sign := int(toks[4].Value.(Modifier))
-	return &ParsedDateSlots{DeltaSeconds: new(secs * sign), Period: period}, nil
+	return sumTwoUnits(toks, 0, int(toks[4].Value.(Modifier)))
 }
 
 // handlePrepDirectionIntegerUnit handles: PREP DIRECTION INTEGER UNIT
 // Example: "in next 2 days"
 func handlePrepDirectionIntegerUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	n := toks[2].Value.(int)
-	period := toks[3].Value.(Period)
-	secs := periodToSeconds[period]
-	return &ParsedDateSlots{
-		DeltaSeconds: new(n * secs),
-		Period:       period,
-	}, nil
+	return relativeSlots(float64(toks[2].Value.(int)), toks[3].Value.(Period), 1)
 }
 
 // handleYearIntegerInteger handles: YEAR INTEGER INTEGER
@@ -614,6 +571,7 @@ func applyTimeToks(slots *ParsedDateSlots, timeToks []Token) (*ParsedDateSlots, 
 	default:
 		return nil, fmt.Errorf("nowandlater: applyTimeToks: unexpected token type %v", timeToks[0].Type)
 	}
+	slots.timeSet = true
 	return slots, nil
 }
 
@@ -760,9 +718,7 @@ func handleYearMonth(tokens []Token) (*ParsedDateSlots, error) {
 // Implied quantity is 1.
 func handlePrepUnit(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	period := toks[1].Value.(Period)
-	secs := periodToSeconds[period]
-	return &ParsedDateSlots{DeltaSeconds: new(secs), Period: period}, nil
+	return relativeSlots(1, toks[1].Value.(Period), 1)
 }
 
 // handleUnitModifier handles: UNIT MODIFIER
@@ -770,10 +726,7 @@ func handlePrepUnit(tokens []Token) (*ParsedDateSlots, error) {
 // Implied quantity is 1.
 func handleUnitModifier(tokens []Token) (*ParsedDateSlots, error) {
 	toks := FilterFillers(tokens)
-	period := toks[0].Value.(Period)
-	secs := periodToSeconds[period]
-	sign := int(toks[1].Value.(Modifier))
-	return &ParsedDateSlots{DeltaSeconds: new(secs * sign), Period: period}, nil
+	return relativeSlots(1, toks[0].Value.(Period), int(toks[1].Value.(Modifier)))
 }
 
 // swapDateOrder assigns a and b to month and day according to order, then

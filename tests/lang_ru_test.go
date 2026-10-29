@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/client9/nowandlater/internal/engine"
-	. "github.com/client9/nowandlater/languages"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/languages"
 )
 
 // ruNow is the fixed reference time for LangRu resolver tests.
@@ -71,7 +71,7 @@ var russianCases = []struct {
 	{"5 июл 2026", u(2026, 7, 5, 0, 0, 0)},    // июл = июль
 	{"3 дн назад", u(2026, 3, 19, 10, 0, 0)},  // дн = дней
 	{"через 2 нед", u(2026, 4, 5, 10, 0, 0)},  // нед = недели
-	{"через 1 мес", u(2026, 4, 21, 10, 0, 0)}, // мес = месяц (30 days)
+	{"через 1 мес", u(2026, 4, 22, 10, 0, 0)}, // one calendar month
 
 	// --- Supplementary data ---
 	{"послепослезавтра", u(2026, 3, 25, 10, 0, 0)},      // in 3 days

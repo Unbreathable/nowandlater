@@ -6,7 +6,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	. "github.com/client9/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
 )
 
 // LangJa is the built-in Japanese Lang.

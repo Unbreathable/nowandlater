@@ -241,10 +241,15 @@ const (
 //
 // Modeled on libc struct tm with three additions: delta, direction, and anchor.
 type ParsedDateSlots struct {
+	// relative retains calendar units rather than flattening them to seconds.
+	relative *relativeDelta
+	// timeSet distinguishes explicit midnight from an omitted clock time.
+	timeSet bool
 
-	// Relative offset from now, pre-normalized to seconds.
-	// e.g. "3 days ago" → -259200
-	// nil means no relative delta was expressed.
+	// Approximate relative offset from now in seconds (e.g. "3 days ago" →
+	// -259200). Parsed calendar units are retained separately for resolution.
+	// A projection too large for the platform int is represented as zero;
+	// resolution still uses the calendar units. nil means no relative delta.
 	DeltaSeconds *int
 
 	// Location is the timezone parsed from the input (e.g. "EST", "+05:30", "Z").

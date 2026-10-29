@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/client9/nowandlater"
-	. "github.com/client9/nowandlater/internal/engine"
-	. "github.com/client9/nowandlater/languages"
+	"github.com/Unbreathable/nowandlater"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/languages"
 )
 
 // miniLang is a tiny custom language used to verify that the Lang architecture

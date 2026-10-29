@@ -1,7 +1,7 @@
 package languages
 
 import (
-	. "github.com/client9/nowandlater/internal/engine"
+	. "github.com/Unbreathable/nowandlater/internal/engine"
 )
 
 // LangPt is the built-in Portuguese Lang (covers both European and

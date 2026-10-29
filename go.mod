@@ -1,3 +1,3 @@
-module github.com/client9/nowandlater
+module github.com/Unbreathable/nowandlater
 
 go 1.26

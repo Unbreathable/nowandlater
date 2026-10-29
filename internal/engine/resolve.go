@@ -58,23 +58,28 @@ func ResolveWithPolicy(slots *ParsedDateSlots, now time.Time, policy ResolvePoli
 	// Produced by: handleAnchor, handleRelativeDelta, handlePrepIntegerUnit,
 	// handlePrepUnit, handleUnitModifier, handleAnchorPrep* variants.
 	case slots.DeltaSeconds != nil:
+		sign := 1
 		if slots.AmbiguousForm == AmbiguousImplicitDuration {
 			if policy.RejectAmbiguous {
 				return time.Time{}, fmt.Errorf("%w: relative duration %q needs an explicit modifier", ErrAmbiguous, describeSlots(slots))
 			}
-			base := now.Add(time.Duration(absInt(*slots.DeltaSeconds)*directionSign(policyDurationDirection(policy))) * time.Second)
-			if slots.Period <= PeriodHour && (slots.Hour != 0 || slots.Minute != 0) {
-				return applyTimePart(base, slots), nil
-			}
-			return base, nil
+			sign = directionSign(policyDurationDirection(policy))
 		}
-		base := now.Add(time.Duration(*slots.DeltaSeconds) * time.Second)
-		// Apply a time-of-day only when one was explicitly expressed alongside
-		// the delta (e.g. "today at 9:30"). Period <= PeriodHour is necessary but
-		// not sufficient: delta-unit expressions like "in 2 hours" also set
-		// Period=PeriodHour but leave Hour=Minute=0, so check that at least one
-		// time component is non-zero.
-		if slots.Period <= PeriodHour && (slots.Hour != 0 || slots.Minute != 0) {
+		delta := slots.relative
+		if delta == nil {
+			// Preserve support for caller-supplied engine slots without multiplying
+			// seconds into a potentially overflowing nanosecond Duration.
+			seconds := int64(*slots.DeltaSeconds)
+			if seconds < -maxRelativeSeconds || seconds > maxRelativeSeconds {
+				return time.Time{}, fmt.Errorf("nowandlater: relative offset out of range")
+			}
+			delta = &relativeDelta{seconds: seconds}
+		}
+		base, err := delta.apply(now, sign)
+		if err != nil {
+			return time.Time{}, err
+		}
+		if slots.timeSet || slots.Hour != 0 || slots.Minute != 0 || slots.Second != 0 {
 			return applyTimePart(base, slots), nil
 		}
 		return base, nil
@@ -410,13 +415,6 @@ func directionSign(direction Direction) int {
 		return -1
 	}
 	return 1
-}
-
-func absInt(n int) int {
-	if n < 0 {
-		return -n
-	}
-	return n
 }
 
 func describeSlots(slots *ParsedDateSlots) string {
