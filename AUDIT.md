@@ -1,5 +1,8 @@
 # Review for the safety fork
 
+> [!WARNING]
+> This was written by AI and may contain errors. The findings on the timestamps were interesting with day-light saving time, etc. Codex told me it fixed it in here, but I have not verified it. I just know that the library works for now.
+
 Reviewed 2026-10-29. Upstream snapshot: [`31604653dcd7e8a3201d2b695a05870cd11567c4`](https://github.com/client9/nowandlater/commit/31604653dcd7e8a3201d2b695a05870cd11567c4).
 
 ## Scope and conclusion
